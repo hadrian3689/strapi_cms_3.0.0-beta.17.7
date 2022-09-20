@@ -1,10 +1,8 @@
-# Project Title
-
-Strapi CMS CVE-2019-18818 and 19606 / Authenticated Blind Remote Code Execution
-
-## Description
+# Strapi CMS CVE-2019-18818 and 19606 
 
 Blind Remote Code Execution of Strapi CMS Version 3.0.0-beta.17.7 and earlier to get reverse shell
+
+## Getting Started
 
 ### Executing program
 
